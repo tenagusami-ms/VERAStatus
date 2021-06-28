@@ -95,6 +95,14 @@ def vex_lines2observation_info(obs_info_lines: Mapping[str, Any],
     """
 
     def convert_value(vex_key: str) -> Union[str, datetime]:
+        """
+        VEXスケジュールファイルの要素を格納用の形に変換
+        Args:
+            vex_key: VEXスケジュールファイルでのキー
+
+        Returns:
+            スケジュール要素(Union[str, datetime])
+        """
         if vex_key == 'exper_nominal_start' or vex_key == 'exper_nominal_stop':
             return vex_time2datetime(obs_info_lines[vex_key])
         elif vex_key == 'ref $IF':

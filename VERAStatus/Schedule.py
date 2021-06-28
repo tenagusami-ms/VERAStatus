@@ -6,7 +6,7 @@ Scheduleモジュール
 """
 from __future__ import annotations
 
-from concurrent.futures._base import Future
+from concurrent.futures import Future
 from concurrent.futures.process import ProcessPoolExecutor
 from datetime import datetime
 import pathlib as p
@@ -20,6 +20,9 @@ from .Vex import schedule_files, schedule_file2observation_info
 
 
 class ThreadGetSchedule(Thread):
+    """
+    観測スケジュール取得クラス
+    """
     def __init__(self, server_settings: ServerSettings, file: p.PurePath) -> None:
         super().__init__()
         self.__server_settings: ServerSettings = server_settings
@@ -27,10 +30,18 @@ class ThreadGetSchedule(Thread):
         self.got: Optional[ObservationInfo] = None
 
     def run(self) -> None:
+        """
+        operationのファイルを読んで観測情報を取得・格納する。
+        """
         self.got = schedule_file2observation_info(self.__server_settings, self.__file)
 
 
 def keywords() -> Iterable[str]:
+    """
+    観測スケジュールファイル内で拾う項目リスト
+    Returns:
+        項目リスト(Iterable[str]
+    """
     return [
         'observation_ID',
         'description',

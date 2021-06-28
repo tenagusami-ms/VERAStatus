@@ -15,6 +15,7 @@ Options:
 from __future__ import annotations
 
 import dataclasses
+import re
 from datetime import datetime
 import pathlib as p
 import sys
@@ -67,18 +68,19 @@ def read_options() -> Options:
     Returns:
         オプション設定(Options)
     """
-    args: MutableMapping[str, Any] = docopt(__doc__)
-    schema = Schema({
-        "--date": Or(None, And(Use(lambda s: datetime.strptime(s + "+0000", "%Y%j%z"),
-                                   error=f"The specified date {args['--date']}"
-                                         + f" is not in YYYYJJJ form.\n"))),
-        "--setting": Or(None, And(Use(p.Path), lambda path: path.is_file(),
-                                  error=f"The specified file {args['--setting']}"
-                                        + " does not exist.\n")),
-    })
-
     try:
-        args = schema.validate(args)
+        args: MutableMapping[str, Any] = docopt(__doc__)
+        args = Schema({
+            "--date": Or(None,
+                         And(lambda s: re.match(r"^\d{7}$", s) is not None,
+                             Use(lambda s: datetime.strptime(s + "+0000", "%Y%j%z")),
+                             error=f"The specified date {args['--date']}"
+                                   f" is not in YYYYJJJ form.\n")),
+            "--setting": Or(None, And(Use(p.Path), lambda path: path.is_file(),
+                                      error=f"The specified file {args['--setting']}"
+                                            + " does not exist.\n")),
+        }).validate(args)
+
         if args["--date"] is None:
             args["--date"] = datetime.utcnow()
         if args["--setting"] is None:
@@ -87,11 +89,11 @@ def read_options() -> Options:
                 raise DataReadError(f"The default setting file {default_setting} does not exist.")
             args["--setting"] = default_setting
 
+        return Options(args["--date"], args["--setting"])
+
     except SchemaError as e:
         print(e.args[0])
         exit(1)
-
-    return Options(args["--date"], args["--setting"])
 
 
 if __name__ == '__main__':
